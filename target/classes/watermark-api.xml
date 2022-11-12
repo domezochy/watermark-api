@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="1b778b9d-1e4d-46b6-af1a-47da9aadba22" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="2f051e72-de71-401f-8e36-7a7025c9e6fa" file="properties/dev-config.yaml" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="2ae1622c-3940-48e3-ad55-83a47f6eebad" >
+		<file:connection workingDir="/Users/olesochy/Library/Mobile Documents/com~apple~CloudDocs/mulesoft/output file" />
+	</file:config>
+	<flow name="watermark-apiFlow" doc:id="18cd8f20-41ff-4a1b-a807-eff625b9c846" >
+		<db:listener doc:id="f109bc87-9070-4f40-9af8-7dc7dd23a4fd" config-ref="Database_Config" table="product" watermarkColumn="offer_valid_until" idColumn="offer_valid_until">
+			<scheduling-strategy >
+				<fixed-frequency frequency="4" timeUnit="SECONDS" startDelay="3"/>
+			</scheduling-strategy>
+		</db:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="9ffcc6e6-63fc-4620-a565-87dfcc7b35d4" />
+		<ee:transform doc:name="Transform Message" doc:id="2b143f27-b9e9-4d9b-9775-6c5243246898" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header=false
+---
+[payload]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:id="4384f363-78c2-4f45-a414-c3f8e43bf5d4" config-ref="File_Config" path="product.csv" mode="APPEND"/>
+	</flow>
+</mule>
